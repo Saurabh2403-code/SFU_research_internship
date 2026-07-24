@@ -1,10 +1,10 @@
 import math
-
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torchdyn.datasets import generate_moons
-
+import matplotlib.animation as animation
+import os
 # Implement some helper functions
 
 
@@ -55,6 +55,7 @@ class torch_wrapper(torch.nn.Module):
 def plot_trajectories(traj):
     """Plot trajectories of some selected samples."""
     n = 2000
+    plt.style.use('default')
     plt.figure(figsize=(6, 6))
     plt.scatter(traj[0, :n, 0], traj[0, :n, 1], s=10, alpha=0.8, c="black")
     plt.scatter(traj[:, :n, 0], traj[:, :n, 1], s=0.2, alpha=0.2, c="olive")
@@ -63,3 +64,28 @@ def plot_trajectories(traj):
     plt.xticks([])
     plt.yticks([])
     plt.show()
+
+
+
+def animate(traj,file_name=animation):
+    plt.style.use('dark_background')
+    fig,ax=plt.subplots(figsize=(8,8),dpi=150)
+    ax.set_xlim(-8,8)
+    ax.set_ylim(-8,8)
+    scat=ax.scatter([],[],alpha=0.8,zorder=1)
+    shape=traj.shape
+    def update(frame):
+        positions=traj[frame]
+        scat.set_offsets(positions)
+        return scat
+    print('Compipling Animation Frames')
+    ani=animation.FuncAnimation(fig,update,frames=shape[0],interval=40,blit=False)
+    output_filename = f'/Users/saurabhgiri/Desktop/SFU_Codes/conditional-flow-matching/assets/baseline-experiment/{file_name}.gif'
+    print(f"Saving animation to '{output_filename}'...")
+    try:
+        ani.save(output_filename, writer='pillow', fps=25)
+        print("Animation successfully exported!")
+    except Exception as e:
+        print(f"\nWarning: Could not save as GIF due to writer missing: {e}")
+        print("Displaying animation plot instead...")
+        plt.show()
