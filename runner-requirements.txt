@@ -49,4 +49,4 @@ pot
 
 # --------- notebook reqs -------- #
 seaborn>=0.12.2
-pandas>=2.2.2
+pandas>=3.0.5
