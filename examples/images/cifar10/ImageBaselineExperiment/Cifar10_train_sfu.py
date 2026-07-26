@@ -20,25 +20,25 @@ FLAGS=flags.FLAGS
 flags.DEFINE_string('model','otcfm',help='model type')
 flags.DEFINE_string('output_dir','./examples/images/cifar10/ImageBaselineExperiment/',help='Ouput directory Address')
 #unet
-flags.DEFINE_integer('num_channels',128,help='Base color channels in UNET')
+flags.DEFINE_integer('num_channels',32,help='Base color channels in UNET')
 #training
 flags.DEFINE_float('lr',2e-4,help='Learining Rate')
-flags.DEFINE_integer('epochs','20000',help='Number of epochs for training')
+flags.DEFINE_integer('epochs',2,help='Number of epochs for training')
 flags.DEFINE_float('grad_clip',1.0,help='gradient clipping norm')
 flags.DEFINE_integer('lr_warmup',50,help='learning rate warmup')
-flags.DEFINE_integer('batch_size',100,help='batch_size')
+flags.DEFINE_integer('batch_size',10,help='batch_size')
 flags.DEFINE_integer('num_workers',4,help='Number Of Dataloader Worker')
 flags.DEFINE_float('ema_decay',0.99,help='ema_decay_rate')
-flags.DEFINE_bool('Parallel_GPUS',False,help='Multi gpu training')
+flags.DEFINE_bool('parallel',False,help='Multi gpu training')
 #EVALUATION
 flags.DEFINE_integer('Save_step',5000,help='Epochs after which model is saved')
 flags.DEFINE_bool('Dataset_download_flag',False,help='Do you want to download data or not?')
+flags.DEFINE_integer('tiny_dataset_size',100,help='Number of images for the Dataset Subset')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def warmup_lr(step):
     return min(step,FLAGS.lr_warmup)/FLAGS.lr_warmup
 def train(argv):
     print(
-
         "lr,batch_size,training_epochs,num_workers:",
           FLAGS.lr,
           FLAGS.batch_size,
@@ -46,8 +46,9 @@ def train(argv):
           FLAGS.num_workers
     )
     dataset=datasets.CIFAR10(
-        root="./data",
+        root="data",
         train=True,
+        download=FLAGS.Dataset_download_flag,
         download=FLAGS.Dataset_download_flag,
         transform=transforms.Compose(
             [
@@ -56,8 +57,9 @@ def train(argv):
             ]
         )
     )
-    indices=list(range(100))
+    indices=list(range(FLAGS.tiny_dataset_size))
     tiny_dataset=torch.utils.data.Subset(dataset,indices)
+    dataloader=torch.utils.data.DataLoader(
     dataloader=torch.utils.data.DataLoader(
         tiny_dataset,
         num_workers=FLAGS.num_workers,
@@ -70,7 +72,7 @@ def train(argv):
     net_model=UNetModelWrapper(
         dim=(3, 32, 32),
         num_res_blocks=2,
-        num_channels=FLAGS.num_channel,
+        num_channels=FLAGS.num_channels,
         channel_mult=[1, 2, 2, 2],
         num_heads=4,
         num_head_channels=64,
@@ -108,7 +110,7 @@ def train(argv):
             f"Unknown model {FLAGS.model}, must be one of ['otcfm', 'icfm', 'fm', 'si']"
         )
 
-    savedir=FLAGS.ouput_dir+FLAGS.model+"/"
+    savedir=FLAGS.output_dir+FLAGS.model+"/"
     os.makedirs(savedir,exist_ok=True)
     with trange(FLAGS.epochs,dynamic_ncols=True) as pbar:
         for step in pbar:
@@ -125,7 +127,7 @@ def train(argv):
             ema(net_model, ema_model, FLAGS.ema_decay)  # new
 
             # sample and Saving the weights
-            if FLAGS.save_step > 0 and step % FLAGS.save_step == 0:
+            if FLAGS.Save_step > 0 and step % 1 == 0:
                 generate_samples(net_model, FLAGS.parallel, savedir, step, net_="normal")
                 generate_samples(ema_model, FLAGS.parallel, savedir, step, net_="ema")
                 torch.save(
@@ -142,7 +144,3 @@ def train(argv):
 
 if __name__ == "__main__":
     app.run(train)
-
-
-
-
