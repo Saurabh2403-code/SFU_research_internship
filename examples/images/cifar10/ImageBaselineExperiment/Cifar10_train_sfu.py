@@ -58,7 +58,7 @@ def train(argv):
     indices=list(range(100))
     tiny_dataset=torch.utils.data.Subset(dataset,indices)
     dataloader=torch.utils.data.Dataloader(
-        tiny_dataset,dataset,
+        tiny_dataset,
         num_workers=FLAGS.num_workers,
         batch_size=FLAGS.batch_size,
         shuffle=True,
