@@ -25,13 +25,13 @@ flags.DEFINE_integer('num_channels',128,help='Base color channels in UNET')
 flags.DEFINE_float('lr',2e-4,help='Learining Rate')
 flags.DEFINE_integer('epochs','20000',help='Number of epochs for training')
 flags.DEFINE_float('grad_clip',1.0,help='gradient clipping norm')
-flags.DEFINE_integer('lr_warmup',5000,help='learning rate warmup')
-flags.DEFINE_integer('batch_size',256,help='batch_size')
+flags.DEFINE_integer('lr_warmup',50,help='learning rate warmup')
+flags.DEFINE_integer('batch_size',100,help='batch_size')
 flags.DEFINE_integer('num_workers',4,help='Number Of Dataloader Worker')
 flags.DEFINE_float('ema_decay',0.99,help='ema_decay_rate')
 flags.DEFINE_bool('Parallel_GPUS',False,help='Multi gpu training')
 #EVALUATION
-flags.DEFINE_integer('Save_step',20000,help='Epochs after which model is saved')
+flags.DEFINE_integer('Save_step',5000,help='Epochs after which model is saved')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def warmup_lr(step):
     return min(step,FLAGS.lr_warmup)/FLAGS.lr_warmup
@@ -47,10 +47,9 @@ def train(argv):
     dataset=datasets.CIFAR10(
         root="./data",
         train=True,
-        download=True,
+        download=False,
         transform=transforms.Compose(
             [
-                transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
             ]
@@ -62,7 +61,6 @@ def train(argv):
         num_workers=FLAGS.num_workers,
         batch_size=FLAGS.batch_size,
         shuffle=True,
-        drop_last=True
     )
     datalooper=infiniteloop(dataloader)
 
