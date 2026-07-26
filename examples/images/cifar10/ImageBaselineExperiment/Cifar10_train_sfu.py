@@ -19,7 +19,7 @@ from torchcfm.models.unet.unet import UNetModelWrapper
 FLAGS=flags.FLAGS
 
 flags.DEFINE_string('model','otcfm',help='model type')
-flags.DEFINE_string('output_dir','./scratch/flow_outputs/',help='Ouput directory Address')
+flags.DEFINE_string('output_dir','/scratch/saurabhg/flow_outputs/',help='Ouput directory Address')
 #unet
 
 flags.DEFINE_integer('num_channels',32,help='Base color channels in UNET')
@@ -39,7 +39,7 @@ flags.DEFINE_bool('parallel',False,help='Multi gpu training')
 flags.DEFINE_integer('Save_step',5000,help='Epochs after which model is saved')
 flags.DEFINE_bool('Dataset_download_flag',False,help='Do you want to download data or not?')
 flags.DEFINE_integer('tiny_dataset_size',100,help='Number of images for the Dataset Subset')
-flags.DEFINE_string('dataset_adress','./scratch/cifar10_data/',help='Adress where dataset will be stored')
+flags.DEFINE_string('dataset_adress','/scratch/saurabhg/cifar10_data/',help='Adress where dataset will be stored')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def warmup_lr(step):
