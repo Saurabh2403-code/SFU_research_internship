@@ -42,7 +42,7 @@ flags.DEFINE_bool("parallel", False, help="multi gpu training")
 # Evaluation
 flags.DEFINE_integer(
     "save_step",
-    20000,
+    5000,
     help="frequency of saving checkpoints, 0 to disable during training",
 )
 
