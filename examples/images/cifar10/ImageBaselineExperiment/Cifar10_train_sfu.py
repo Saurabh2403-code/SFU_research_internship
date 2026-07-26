@@ -32,6 +32,7 @@ flags.DEFINE_float('ema_decay',0.99,help='ema_decay_rate')
 flags.DEFINE_bool('Parallel_GPUS',False,help='Multi gpu training')
 #EVALUATION
 flags.DEFINE_integer('Save_step',5000,help='Epochs after which model is saved')
+flags.DEFINE_bool('Dataset_download_flag',False,help='Do you want to download data or not?')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def warmup_lr(step):
     return min(step,FLAGS.lr_warmup)/FLAGS.lr_warmup
@@ -47,7 +48,7 @@ def train(argv):
     dataset=datasets.CIFAR10(
         root="./data",
         train=True,
-        download=True,
+        download=FLAGS.Dataset_download_flag,
         transform=transforms.Compose(
             [
                 transforms.ToTensor(),
