@@ -47,7 +47,7 @@ def train(argv):
     dataset=datasets.CIFAR10(
         root="./data",
         train=True,
-        download=False,
+        download=True,
         transform=transforms.Compose(
             [
                 transforms.ToTensor(),
