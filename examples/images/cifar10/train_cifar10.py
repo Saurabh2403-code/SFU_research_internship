@@ -31,10 +31,10 @@ flags.DEFINE_integer("num_channel", 128, help="base channel of UNet")
 flags.DEFINE_float("lr", 2e-4, help="target learning rate")  # TRY 2e-4
 flags.DEFINE_float("grad_clip", 1.0, help="gradient norm clipping")
 flags.DEFINE_integer(
-    "total_steps", 400001, help="total training steps"
+    "total_steps", 20000, help="total training steps"
 )  # Lipman et al uses 400k but double batch size
-flags.DEFINE_integer("warmup", 5000, help="learning rate warmup")
-flags.DEFINE_integer("batch_size", 128, help="batch size")  # Lipman et al uses 128
+flags.DEFINE_integer("warmup", 50, help="learning rate warmup")
+flags.DEFINE_integer("batch_size", 100, help="batch size")  
 flags.DEFINE_integer("num_workers", 4, help="workers of Dataloader")
 flags.DEFINE_float("ema_decay", 0.9999, help="ema decay rate")
 flags.DEFINE_bool("parallel", False, help="multi gpu training")
@@ -68,21 +68,21 @@ def train(argv):
     dataset = datasets.CIFAR10(
         root="./data",
         train=True,
-        download=True,
+        download=False,
         transform=transforms.Compose(
             [
-                transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
             ]
         ),
     )
+    indices=list(range(100))
+    tiny_dataset=torch.utils.data.Subset(dataset,indices)
     dataloader = torch.utils.data.DataLoader(
-        dataset,
+        tiny_dataset,
         batch_size=FLAGS.batch_size,
         shuffle=True,
         num_workers=FLAGS.num_workers,
-        drop_last=True,
     )
 
     datalooper = infiniteloop(dataloader)
@@ -149,7 +149,7 @@ def train(argv):
             optim.step()
             sched.step()
             ema(net_model, ema_model, FLAGS.ema_decay)  # new
-
+            pbar.set_postfix(loss=loss.item())
             # sample and Saving the weights
             if FLAGS.save_step > 0 and step % FLAGS.save_step == 0:
                 generate_samples(net_model, FLAGS.parallel, savedir, step, net_="normal")
