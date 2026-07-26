@@ -17,16 +17,21 @@ from torchcfm.conditional_flow_matching import (
 from torchcfm.models.unet.unet import UNetModelWrapper
 
 FLAGS=flags.FLAGS
+
 flags.DEFINE_string('model','otcfm',help='model type')
 flags.DEFINE_string('output_dir','./examples/images/cifar10/ImageBaselineExperiment/',help='Ouput directory Address')
 #unet
+
 flags.DEFINE_integer('num_channels',32,help='Base color channels in UNET')
+
+
+
 #training
 flags.DEFINE_float('lr',2e-4,help='Learining Rate')
-flags.DEFINE_integer('epochs',2,help='Number of epochs for training')
+flags.DEFINE_integer('epochs',20000,help='Number of epochs for training')
 flags.DEFINE_float('grad_clip',1.0,help='gradient clipping norm')
 flags.DEFINE_integer('lr_warmup',50,help='learning rate warmup')
-flags.DEFINE_integer('batch_size',10,help='batch_size')
+flags.DEFINE_integer('batch_size',128,help='batch_size')
 flags.DEFINE_integer('num_workers',4,help='Number Of Dataloader Worker')
 flags.DEFINE_float('ema_decay',0.99,help='ema_decay_rate')
 flags.DEFINE_bool('parallel',False,help='Multi gpu training')
@@ -48,7 +53,6 @@ def train(argv):
     dataset=datasets.CIFAR10(
         root="data",
         train=True,
-        download=FLAGS.Dataset_download_flag,
         download=FLAGS.Dataset_download_flag,
         transform=transforms.Compose(
             [
