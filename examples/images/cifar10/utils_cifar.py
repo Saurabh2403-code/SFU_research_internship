@@ -39,7 +39,7 @@ def setup(
     )
 
 
-def generate_samples(model, parallel, savedir, step, net_="normal"):
+def generate_samples(model, parallel, savedir, step,time_steps:int=1,net_="normal"):
     """Save 64 generated images (8 x 8) for sanity check along training.
 
     Parameters
@@ -64,7 +64,7 @@ def generate_samples(model, parallel, savedir, step, net_="normal"):
     with torch.no_grad():
         traj = node_.trajectory(
             torch.randn(64, 3, 32, 32, device=device),
-            t_span=torch.linspace(0, 1, 100, device=device),
+            t_span=torch.linspace(0, 1, time_steps, device=device),
         )
         traj = traj[-1, :].view([-1, 3, 32, 32]).clip(-1, 1)
         traj = traj / 2 + 0.5
