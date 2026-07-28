@@ -4,11 +4,12 @@ import os
 import torch
 from torch import distributed as dist
 from torchdyn.core import NeuralODE
-
+import torchvision
 # from torchvision.transforms import ToPILImage
 from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import numpy as np
+from torch.utils.data import DataLoader,Subset
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -41,7 +42,7 @@ def setup(
     )
 
 
-def generate_samples(model, parallel, savedir, step,time_steps:int=1,net_="normal"):
+def generate_samples(model, parallel, savedir, step,time_steps:int=1,number_of_images:int=64,net_="normal"):
     """Save 64 generated images (8 x 8) for sanity check along training.
 
     Parameters
@@ -65,12 +66,12 @@ def generate_samples(model, parallel, savedir, step,time_steps:int=1,net_="norma
     node_ = NeuralODE(model_, solver="euler", sensitivity="adjoint")
     with torch.no_grad():
         traj = node_.trajectory(
-            torch.randn(64, 3, 32, 32, device=device),
+            torch.randn(number_of_images, 3, 32, 32, device=device),
             t_span=torch.linspace(0, 1, time_steps+1, device=device),
         )
         traj = traj[-1, :].view([-1, 3, 32, 32]).clip(-1, 1)
         traj = traj / 2 + 0.5
-    save_image(traj, savedir + f"{net_}_generated_FM_images_step_{step}.png", nrow=8)
+    save_image(traj, savedir + f"{net_}_generated_FM_images_step_{step}.png", nrow=10)
 
     model.train()
 
@@ -101,6 +102,28 @@ def plot_loss(loss_file:str='/scratch/saurabhg/losses',model:str='otcfm'):
      plt.savefig(f'{loss_file}+loss_plot.png',dpi=150)
           
      
+def get_original_image(count:int=100):
+     dataset=torchvision.datasets.CIFAR10(
+          root='scratch/saurabhg/cifar10_data',
+          download=False,
+          transform=torchvision.transforms.Compose(
+               [
+                torchvision.tranforms.ToTensor(),  
+                torchvision.transforms((0.5,0.5,0.5),(0.5,0.5,0.5))    
+               ]
+          )
+     )
+     indices=list(range(count))
+     tiny_dataset=Subset(dataset)
+     dataloader=DataLoader(
+          tiny_dataset,
+          shuffle=False,
+          batch_size=count     
+     )
+     data=next(iter(dataloader))[0]
+     data=data*0.5+0.5
+     save_image(data,f'scratch/saurabhg/cifar10_data/original_image_{count}.png')
+
      
 def detect_mode_collapse():
     """
