@@ -86,3 +86,22 @@ def infiniteloop(dataloader):
     while True:
         for x, y in iter(dataloader):
             yield x
+
+def logging_loss(loss,loss_file='/scratch/saurabhg/losses'):
+    savedir=loss_file
+    os.makedir(savedir,exists_ok=True)
+    if loss_list:
+        loss_list.append(loss)
+    else:
+        loss_list=[]
+        loss_list.append(loss)
+    with open(savedir+f'{FLAGS.model}.txt',"a") as file:
+        file.write(loss)
+
+
+def detect_mode_collapse():
+    """
+    INPUT: generated dataset shape=[B,3,H,W]
+    Output: Mode Collapse Flag
+    """
+    

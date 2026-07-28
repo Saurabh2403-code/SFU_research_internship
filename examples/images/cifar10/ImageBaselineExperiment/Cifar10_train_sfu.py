@@ -7,7 +7,7 @@ from absl import app,flags
 from tqdm import trange
 parent_folder=parent_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_folder)
-from utils_cifar import ema, generate_samples, infiniteloop
+from utils_cifar import ema, generate_samples, infiniteloop,logging_loss
 from torchcfm.conditional_flow_matching import (
     ConditionalFlowMatcher,
     ExactOptimalTransportConditionalFlowMatcher,
@@ -132,7 +132,10 @@ def train(argv):
             optim.step()
             sched.step()
             ema(net_model, ema_model, FLAGS.ema_decay)  # new
-
+            if step%1==0:
+                print(loss.item)
+                logging_loss(loss.item)
+                
             # sample and Saving the weights
             if FLAGS.Save_step > 0 and step % FLAGS.Save_step == 0:
                 generate_samples(net_model, FLAGS.parallel, savedir, step,time_steps=FLAGS.time_steps,net_="normal")
