@@ -88,21 +88,12 @@ def ema(source, target, decay):
 def infiniteloop(dataloader):
     while True:
         for x, y in iter(dataloader):
-<<<<<<< Updated upstream
             yield x
-
-def logging_loss(loss_val,loss_file='/scratch/saurabhg/losses'):
-    os.makedirs(loss_file,exist_ok=True)
-    with open(os.path.join(loss_file,f'{FLAGS.model}.txt'),'a') as file:
-                
-                file.write(f'{loss_val}\n')
-=======
-            yield  x
 def logging_loss(loss_val, model_name, loss_file='/scratch/saurabhg/losses/'):
     os.makedirs(loss_file, exist_ok=True)
     with open(os.path.join(loss_file, f'{model_name}.txt'), "a") as file:
         file.write(f"{loss_val}\n")
->>>>>>> Stashed changes
+
 
 def plot_loss(loss_file:str='/scratch/saurabhg/losses',model:str='otcfm'):
      data=np.loadtxt(os.path.join(loss_file,f'{model}.txt'))
