@@ -64,7 +64,7 @@ def generate_samples(model, parallel, savedir, step,time_steps:int=1,net_="norma
     with torch.no_grad():
         traj = node_.trajectory(
             torch.randn(64, 3, 32, 32, device=device),
-            t_span=torch.linspace(0, 1, time_steps, device=device),
+            t_span=torch.linspace(0, 1, time_steps+1, device=device),
         )
         traj = traj[-1, :].view([-1, 3, 32, 32]).clip(-1, 1)
         traj = traj / 2 + 0.5
@@ -87,17 +87,10 @@ def infiniteloop(dataloader):
         for x, y in iter(dataloader):
             yield x
 
-def logging_loss(loss,loss_file='/scratch/saurabhg/losses'):
-    savedir=loss_file
-    os.makedir(savedir,exists_ok=True)
-    if loss_list:
-        loss_list.append(loss)
-    else:
-        loss_list=[]
-        loss_list.append(loss)
-    with open(savedir+f'{FLAGS.model}.txt',"a") as file:
-        file.write(loss)
-
+def logging_loss(loss_val, model_name, loss_file='/scratch/saurabhg/losses/'):
+    os.makedirs(loss_file, exist_ok=True)
+    with open(os.path.join(loss_file, f'{model_name}.txt'), "a") as file:
+        file.write(f"{loss_val}\n")
 
 def detect_mode_collapse():
     """

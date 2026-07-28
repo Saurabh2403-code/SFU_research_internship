@@ -40,7 +40,7 @@ flags.DEFINE_integer('Save_step',5000,help='Epochs after which model is saved')
 flags.DEFINE_bool('Dataset_download_flag',False,help='Do you want to download data or not?')
 flags.DEFINE_integer('tiny_dataset_size',100,help='Number of images for the Dataset Subset')
 flags.DEFINE_string('dataset_adress','/scratch/saurabhg/cifar10_data/',help='Adress where dataset will be stored')
-flags.Define_integer('time_steps',1,help='time_steps_to_simulate_ode')
+flags.DEFINE_integer('time_steps',1,help='time_steps_to_simulate_ode')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def warmup_lr(step):
@@ -132,9 +132,8 @@ def train(argv):
             optim.step()
             sched.step()
             ema(net_model, ema_model, FLAGS.ema_decay)  # new
-            if step%1==0:
-                print(loss.item)
-                logging_loss(loss.item)
+            if step%100==0:
+                logging_loss(loss.item(),FLAGS.model)
                 
             # sample and Saving the weights
             if FLAGS.Save_step > 0 and step % FLAGS.Save_step == 0:
