@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import DataLoader,Subset
 from torchvision import datasets,transforms
-
+from absl import flags
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-
-
+FLAGS=flags.FLAGS
+flags.DEFINE_bool('return_image_tensor',True,help='Whether do you want to get the tensor of image or not')
 def setup(
     rank: int,
     total_num_gpus: int,
@@ -75,7 +75,8 @@ def generate_samples(model, parallel, savedir, step,time_steps:int=1,number_of_i
     save_image(traj, savedir + f"{net_}_generated_FM_images_step_{step}.png", nrow=10)
 
     model.train()
-    return traj
+    if FLAGS.return_image_tensor:
+        return traj
 
 
 def ema(source, target, decay):
@@ -124,8 +125,8 @@ def get_original_image(count:int=100):
      data=data*0.5+0.5
 
      save_image(data,f'scratch/saurabhg/cifar10_data/original_image_{count}.png')
-
-     return data
+     if FLAGS.return_image_tensor:
+         return data
 
 def get_l2_distance(original_dataset,generated_dataset):
     """
@@ -141,5 +142,5 @@ def detect_mode_collapse():
     retruns an matrix showing correlation with each generated images to the original Image
     Output:[B,B]
     """
-    
+
     
