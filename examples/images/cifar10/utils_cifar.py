@@ -98,9 +98,11 @@ def logging_loss(loss_val, model_name, loss_file='/scratch/saurabhg/losses/'):
         file.write(f"{loss_val}\n")
 
 def plot_loss(loss_file:str='/scratch/saurabhg/losses',model:str='otcfm'):
+     save_dir=loss_file+f'{model}_loss_plots'
+     os.makedirs(save_dir,exist_ok=True)
      data=np.loadtxt(os.path.join(loss_file,f'{model}.txt'))
      plt.plot(data)
-     plt.savefig(f'{loss_file}+loss_plot.png',dpi=150)
+     plt.savefig(f'{save_dir}'+'/'+'loss_plot.png',dpi=150)
 
 
 def get_original_image(count:int=100):
