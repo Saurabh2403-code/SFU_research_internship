@@ -5,7 +5,7 @@ import torch
 from torchvision import datasets,transforms
 from absl import app,flags
 from tqdm import trange
-parent_folder=parent_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+parent_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_folder)
 from utils_cifar import ema, generate_samples, infiniteloop,logging_loss
 from torchcfm.conditional_flow_matching import (
