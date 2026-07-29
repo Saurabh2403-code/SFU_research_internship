@@ -12,6 +12,7 @@ import numpy as np
 from torch.utils.data import DataLoader,Subset
 from torchvision import datasets,transforms
 from absl import flags
+from pathlib import Path
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 FLAGS=flags.FLAGS
@@ -97,12 +98,30 @@ def logging_loss(loss_val, model_name, loss_file='/scratch/saurabhg/losses/'):
     with open(os.path.join(loss_file, f'{model_name}.txt'), "a") as file:
         file.write(f"{loss_val}\n")
 
-def plot_loss(loss_file:str='/scratch/saurabhg/losses',model:str='otcfm'):
-     save_dir=loss_file+f'{model}_loss_plots'
-     os.makedirs(save_dir,exist_ok=True)
-     data=np.loadtxt(os.path.join(loss_file,f'{model}.txt'))
-     plt.plot(data)
-     plt.savefig(f'{save_dir}'+'/'+'loss_plot.png',dpi=150)
+
+
+
+
+def plot_loss(
+    loss_file: str = "/scratch/saurabhg/losses", model: str = "otcfm"
+):
+
+    base_dir = Path(loss_file)
+    save_dir = base_dir / f"{model}_loss_plots"
+    save_dir.mkdir(parents=True, exist_ok=True)
+
+    source_file = base_dir / f"{model}.txt"
+    data = np.loadtxt(source_file)
+
+    plt.figure()  
+    plt.plot(data)
+    plt.title(f"{model.upper()} Training Loss")
+    plt.xlabel("Epochs / Iterations")
+    plt.ylabel("Loss")
+
+    plt.savefig(save_dir / "loss_plot.png", dpi=150, bbox_inches="tight")
+    plt.close() 
+
 
 
 def get_original_image(count:int=100):
