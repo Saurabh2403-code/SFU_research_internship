@@ -10,6 +10,7 @@ from torchvision.utils import save_image
 import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import DataLoader,Subset
+from torchvision import datasets,transforms
 
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
@@ -74,6 +75,7 @@ def generate_samples(model, parallel, savedir, step,time_steps:int=1,number_of_i
     save_image(traj, savedir + f"{net_}_generated_FM_images_step_{step}.png", nrow=10)
 
     model.train()
+    return traj
 
 
 def ema(source, target, decay):
@@ -98,6 +100,8 @@ def plot_loss(loss_file:str='/scratch/saurabhg/losses',model:str='otcfm'):
      data=np.loadtxt(os.path.join(loss_file,f'{model}.txt'))
      plt.plot(data)
      plt.savefig(f'{loss_file}+loss_plot.png',dpi=150)
+
+
 def get_original_image(count:int=100):
      dataset=torchvision.datasets.CIFAR10(
           root='scratch/saurabhg/cifar10_data',
@@ -118,12 +122,24 @@ def get_original_image(count:int=100):
      )
      data=next(iter(dataloader))[0]
      data=data*0.5+0.5
+
      save_image(data,f'scratch/saurabhg/cifar10_data/original_image_{count}.png')
 
+     return data
+
+def get_l2_distance(original_dataset,generated_dataset):
+    """
+    Input:original_dataset.shape=[B,H,W,3],generated_dataset.shape=[B,H,W,3]
+    """
+    original_dataset=torch.flatten(original_dataset,start_dim=1) #[B,H*W*3]
+    generated_dataset=torch.flatten(generated_dataset,start_dim=1)
+    return torch.cdist(original_dataset,generated_dataset,p=2)
      
 def detect_mode_collapse():
     """
-    INPUT: generated dataset shape=[B,3,H,W]
-    Output: Mode Collapse Flag
+    INPUT: generated dataset shape=[B,3,H,W],original_dataset=[B,3,H,W]
+    retruns an matrix showing correlation with each generated images to the original Image
+    Output:[B,B]
     """
+    
     
