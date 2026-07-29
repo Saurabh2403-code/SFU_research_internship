@@ -132,7 +132,7 @@ def train(argv):
             optim.step()
             sched.step()
             ema(net_model, ema_model, FLAGS.ema_decay)  # new
-            if step%100==0:
+            if step%1==0:
                 logging_loss(loss.item(),FLAGS.model)
                 
             # sample and Saving the weights
