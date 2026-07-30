@@ -126,17 +126,17 @@ def plot_loss(
 
 def get_original_image(count:int=100):
      dataset=torchvision.datasets.CIFAR10(
-          root='scratch/saurabhg/cifar10_data',
+          root='/scratch/saurabhg/cifar10_data',
           download=False,
           transform=torchvision.transforms.Compose(
                [
-                torchvision.tranforms.ToTensor(),  
-                torchvision.transforms((0.5,0.5,0.5),(0.5,0.5,0.5))    
+                torchvision.transforms.ToTensor(),  
+                torchvision.transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))    
                ]
           )
      )
      indices=list(range(count))
-     tiny_dataset=Subset(dataset)
+     tiny_dataset=Subset(dataset,indices)
      dataloader=DataLoader(
           tiny_dataset,
           shuffle=False,
@@ -144,8 +144,11 @@ def get_original_image(count:int=100):
      )
      data=next(iter(dataloader))[0]
      data=data*0.5+0.5
+     savedir="scratch/saurabhg/cifar10_data"
+     os.makedirs(savedir,exist_ok=True)
 
-     save_image(data,f'scratch/saurabhg/cifar10_data/original_image_{count}.png')
+
+     save_image(data,f'{savedir}/original_image_{count}.png')
      if FLAGS.return_image_tensor:
          return data
 
@@ -155,7 +158,7 @@ def get_l2_distance(original_dataset,generated_dataset):
     """
     original_dataset=torch.flatten(original_dataset,start_dim=1) #[B,H*W*3]
     generated_dataset=torch.flatten(generated_dataset,start_dim=1)
-    return torch.cdist(original_dataset,generated_dataset,p=2)
+    return torch.cdist(original_dataset.to(device),generated_dataset.to(device),p=2)
      
 def detect_mode_collapse():
     """

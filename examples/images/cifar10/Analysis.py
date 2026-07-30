@@ -24,7 +24,6 @@ flags.DEFINE_string('output_dir','/scratch/saurabhg/flow_outputs/',help='Ouput D
 flags.DEFINE_string('model','otcfm',help='model_type')
 flags.DEFINE_integer('step',15000,help='Epoch number after which we are evaluating the model')
 flags.DEFINE_integer('time_steps',1,help='time_steps_to_simulate_ode')
-flags.DEFINE_bool('return_image_tensor',True,help='Whether do you want to get the tensor of image or not')
 flags.DEFINE_bool('parallel',False,help='Multi GPU training')
 def inference(argv):
 
@@ -44,14 +43,14 @@ def inference(argv):
     save_dir=model_dir+'distances'+'/'
     os.makedirs(save_dir,exist_ok=True)
     state_dict=torch.load(model_dir+f'{FLAGS.model}_cifar10_weights_step_{FLAGS.step}.pt', weights_only=True)
-    net_model.load_state_dict(state_dict)
+    net_model.load_state_dict(state_dict["net_model"])
     net_model.eval()
     with torch.no_grad():
         generated_samples=generate_samples(net_model, FLAGS.parallel,model_dir+f"{FLAGS.model}_cifar10_weights_step_{FLAGS.step}.pt",step=FLAGS.step,time_steps=FLAGS.time_steps,number_of_images=FLAGS.num_images,net_="normal")
         original_dataset=get_original_image(FLAGS.num_images)
         l2_distance=get_l2_distance(generated_samples,original_dataset)
         with open(save_dir+f'{FLAGS.model}_Distances_{FLAGS.num_images}.txt','a') as f:
-            f.write(str(l2_distance.to_list()))
+            f.write(str(l2_distance.tolist()))
         plt.savefig('Distance Heat Map')
 if __name__=="__main__":
     app.run(inference)
