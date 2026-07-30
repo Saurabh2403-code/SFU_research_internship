@@ -51,7 +51,7 @@ def inference(argv):
         l2_distance=get_l2_distance(generated_samples,original_dataset)
         with open(save_dir+f'{FLAGS.model}_Distances_{FLAGS.num_images}.txt','a') as f:
             f.write(str(l2_distance.tolist()))
-        plt.savefig('Distance Heat Map')
+        plt.savefig(save_dir+f'{FLAGS.model}_{FLAGS.num_images}/Distances_Heat Map.png')
 if __name__=="__main__":
     app.run(inference)
 
