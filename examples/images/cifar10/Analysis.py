@@ -27,27 +27,29 @@ flags.DEFINE_integer('step',15000,help='Epoch number after which we are evaluati
 flags.DEFINE_integer('time_steps',1,help='time_steps_to_simulate_ode')
 flags.DEFINE_bool('parallel',False,help='Multi GPU training')
 def inference(argv):
-    net_model=UNetModelWrapper(
-        dim=(3, 32, 32),
-        num_res_blocks=2,
-        num_channels=FLAGS.num_channels,
-        channel_mult=[1, 2, 2, 2],
-        num_heads=4,
-        num_head_channels=64,
-        attention_resolutions="16",
-        dropout=0.1,
-    ).to(device)
-
-
-    model_dir=FLAGS.output_dir+f'{FLAGS.model}'+'/'
-    save_dir=model_dir+'distances'+'/'
-    os.makedirs(save_dir,exist_ok=True)
-    heatmap_dir=save_dir+f'{FLAGS.model}_{FLAGS.num_images}'
-    os.makedirs(heatmap_dir,exist_ok=True)
-    state_dict=torch.load(model_dir+f'{FLAGS.model}_cifar10_weights_step_{FLAGS.step}.pt', weights_only=True)
-    net_model.load_state_dict(state_dict["net_model"])
-    net_model.eval()
     with torch.no_grad():
+
+        net_model=UNetModelWrapper(
+            dim=(3, 32, 32),
+            num_res_blocks=2,
+            num_channels=FLAGS.num_channels,
+            channel_mult=[1, 2, 2, 2],
+            num_heads=4,
+            num_head_channels=64,
+            attention_resolutions="16",
+            dropout=0.1,
+        ).to(device)
+
+
+        model_dir=FLAGS.output_dir+f'{FLAGS.model}'+'/'
+        save_dir=model_dir+'distances'+'/'
+        os.makedirs(save_dir,exist_ok=True)
+        heatmap_dir=save_dir+f'{FLAGS.model}_{FLAGS.num_images}'
+        os.makedirs(heatmap_dir,exist_ok=True)
+        state_dict=torch.load(model_dir+f'{FLAGS.model}_cifar10_weights_step_{FLAGS.step}.pt', weights_only=True)
+        net_model.load_state_dict(state_dict["net_model"])
+        net_model.eval()
+
         generated_samples=generate_samples(net_model, FLAGS.parallel,model_dir+f"{FLAGS.model}_cifar10_weights_step_{FLAGS.step}.pt",step=FLAGS.step,time_steps=FLAGS.time_steps,number_of_images=FLAGS.num_images,net_="normal")
         original_dataset=get_original_image(100)
         l2_distance=get_l2_distance(original_dataset,generated_samples)

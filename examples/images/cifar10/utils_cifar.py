@@ -93,6 +93,8 @@ def infiniteloop(dataloader):
     while True:
         for x, y in iter(dataloader):
             yield x
+
+            
 def logging_loss(loss_val, model_name, loss_file='/scratch/saurabhg/losses/'):
     os.makedirs(loss_file, exist_ok=True)
     with open(os.path.join(loss_file, f'{model_name}.txt'), "a") as file:
@@ -160,11 +162,10 @@ def get_l2_distance(original_dataset,generated_dataset):
     generated_dataset=torch.flatten(generated_dataset,start_dim=1)
     return torch.cdist(original_dataset.to(device),generated_dataset.to(device),p=2)
      
-def detect_mode_collapse():
-    """
-    INPUT: generated dataset shape=[B,3,H,W],original_dataset=[B,3,H,W]
-    retruns an matrix showing correlation with each generated images to the original Image
-    Output:[B,B]
-    """
+def detect_mode_collapse(distance_matrix):
+    distance_matrix=distance_matrix if isinstance(distance_matrix,torch.tensor) else torch.tensor(distance_matrix)
+    closest_match=torch.argmin(distance_matrix,dim=1)
+    return len(torch.unique(closest_match))/distance_matrix.shape[0]
+
 
     
