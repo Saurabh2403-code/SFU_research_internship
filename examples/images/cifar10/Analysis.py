@@ -27,7 +27,6 @@ flags.DEFINE_integer('step',15000,help='Epoch number after which we are evaluati
 flags.DEFINE_integer('time_steps',1,help='time_steps_to_simulate_ode')
 flags.DEFINE_bool('parallel',False,help='Multi GPU training')
 def inference(argv):
-
     net_model=UNetModelWrapper(
         dim=(3, 32, 32),
         num_res_blocks=2,
@@ -50,8 +49,8 @@ def inference(argv):
     net_model.eval()
     with torch.no_grad():
         generated_samples=generate_samples(net_model, FLAGS.parallel,model_dir+f"{FLAGS.model}_cifar10_weights_step_{FLAGS.step}.pt",step=FLAGS.step,time_steps=FLAGS.time_steps,number_of_images=FLAGS.num_images,net_="normal")
-        original_dataset=get_original_image(FLAGS.num_images)
-        l2_distance=get_l2_distance(generated_samples,original_dataset)
+        original_dataset=get_original_image(100)
+        l2_distance=get_l2_distance(original_dataset,generated_samples)
         torch.save(l2_distance,save_dir+f'{FLAGS.model}_Distances_{FLAGS.num_images}.pt')
         plt.imshow(l2_distance.detach().cpu().numpy(),origin='lower')
         plt.colorbar()
@@ -59,8 +58,5 @@ def inference(argv):
         plt.close()
 if __name__=="__main__":
     app.run(inference)
-
-
-
 
 
