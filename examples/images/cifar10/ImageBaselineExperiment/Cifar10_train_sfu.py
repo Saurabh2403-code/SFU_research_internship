@@ -18,29 +18,29 @@ from torchcfm.models.unet.unet import UNetModelWrapper
 
 FLAGS=flags.FLAGS
 
-flags.DEFINE_string('model','otcfm',help='model type')
+flags.DEFINE_string('model','icfm',help='model type')
 flags.DEFINE_string('output_dir','/scratch/saurabhg/flow_outputs/',help='Ouput directory Address')
 #unet
 
-flags.DEFINE_integer('num_channels',32,help='Base color channels in UNET')
+flags.DEFINE_integer('num_channels',128,help='Base color channels in UNET')
 
 
 
 #training
 flags.DEFINE_float('lr',2e-4,help='Learining Rate')
-flags.DEFINE_integer('epochs',20000,help='Number of epochs for training')
+flags.DEFINE_integer('epochs',100000,help='Number of epochs for training')
 flags.DEFINE_float('grad_clip',1.0,help='gradient clipping norm')
-flags.DEFINE_integer('lr_warmup',50,help='learning rate warmup')
+flags.DEFINE_integer('lr_warmup',10000,help='learning rate warmup')
 flags.DEFINE_integer('batch_size',128,help='batch_size')
 flags.DEFINE_integer('num_workers',4,help='Number Of Dataloader Worker')
 flags.DEFINE_float('ema_decay',0.99,help='ema_decay_rate')
 flags.DEFINE_bool('parallel',False,help='Multi gpu training')
 #EVALUATION
-flags.DEFINE_integer('Save_step',5000,help='Epochs after which model is saved')
+flags.DEFINE_integer('Save_step',10000,help='Epochs after which model is saved')
 flags.DEFINE_bool('Dataset_download_flag',False,help='Do you want to download data or not?')
 flags.DEFINE_integer('tiny_dataset_size',100,help='Number of images for the Dataset Subset')
 flags.DEFINE_string('dataset_adress','/scratch/saurabhg/cifar10_data/',help='Adress where dataset will be stored')
-flags.DEFINE_integer('time_steps',1,help='time_steps_to_simulate_ode')
+flags.DEFINE_integer('time_steps',100,help='time_steps_to_simulate_ode')
 device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def warmup_lr(step):
@@ -102,6 +102,7 @@ def train(argv):
     for param in net_model.parameters():
         model_size+=param.data.nelement()
     print(f"Model params: {model_size / 1000000:.2f} M")
+    print(f"Model : {FLAGS.model}")
 
     sigma = 0.0
     if FLAGS.model == "otcfm":
@@ -132,7 +133,7 @@ def train(argv):
             optim.step()
             sched.step()
             ema(net_model, ema_model, FLAGS.ema_decay)  # new
-            if step%1==0:
+            if step%100==0:
                 logging_loss(loss.item(),FLAGS.model)
                 
             # sample and Saving the weights

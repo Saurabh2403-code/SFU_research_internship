@@ -1,5 +1,8 @@
 import copy
 import os
+import lpips
+from tqdm import tqdm
+
 
 import torch
 from torch import distributed as dist
@@ -15,8 +18,8 @@ from absl import flags
 from pathlib import Path
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-FLAGS=flags.FLAGS
-flags.DEFINE_bool('return_image_tensor',True,help='Whether do you want to get the tensor of image or not')
+# FLAGS=flags.FLAGS
+# flags.DEFINE_bool('return_image_tensor',True,help='Whether do you want to get the tensor of image or not')
 def setup(
     rank: int,
     total_num_gpus: int,
@@ -73,11 +76,12 @@ def generate_samples(model, parallel, savedir, step,time_steps:int=1,number_of_i
         )
         traj = traj[-1, :].view([-1, 3, 32, 32]).clip(-1, 1)
         traj = traj / 2 + 0.5
-    save_image(traj, savedir + f"{net_}_generated_FM_images_step_{step}.png", nrow=10)
-
+    savedir = '/home/saurabhg/scratch/flow_outputs/icfm/image_tensor'
+    os.makedirs(savedir, exist_ok=True)
+    filepath = os.path.join(savedir, f"generated_ICFM_images_step_{step}_2.pt")
+    torch.save(traj, filepath)
     model.train()
-    if FLAGS.return_image_tensor:
-        return traj
+    return traj
 
 
 def ema(source, target, decay):
@@ -146,13 +150,10 @@ def get_original_image(count:int=100):
      )
      data=next(iter(dataloader))[0]
      data=data*0.5+0.5
-     savedir="scratch/saurabhg/cifar10_data"
+     savedir="/home/saurabhg/scratch/cifar10_data/image_tensor"
      os.makedirs(savedir,exist_ok=True)
-
-
-     save_image(data,f'{savedir}/original_image_{count}.png')
-     if FLAGS.return_image_tensor:
-         return data
+     torch.save(data,f'{savedir}/original_image_{count}.pt')
+     return data
 
 def get_l2_distance(original_dataset,generated_dataset):
     """
@@ -166,6 +167,44 @@ def detect_mode_collapse(distance_matrix):
     distance_matrix=distance_matrix if isinstance(distance_matrix,torch.tensor) else torch.tensor(distance_matrix)
     closest_match=torch.argmin(distance_matrix,dim=1)
     return len(torch.unique(closest_match))/distance_matrix.shape[0]
+
+
+
+# def calculate_lpips_modes(generated_images,original_images):
+#     """
+#     Calculate the number of unique modes in the generated images
+
+#     Argument:
+#             generated_images:Tensor Of generated Images Shape=[B.C,H,W]
+#             original_images:Tensor of original Images Shape =[B,C,H,W]
+#     Output:
+#             Returns Unique Modes
+#     """
+#     device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+#     loss_fn_vgg=lpips.LPIPS(net='vgg').to(device)
+#     loss_fn_vgg.eval()
+#     original_images=original_images.to(device)
+#     print(original_images.shape)
+#     closest_modes=[]
+#     indices=[]
+#     for i in tqdm(range(1)):
+#         gen_images=generated_images.to(device)
+#         print(gen_images.shape)
+#         original_img=original_images[i].expand_as(gen_images)
+#         # gen_expanded=gen_img.expand_as(original_images)
+#         with torch.no_grad():
+#             distances=loss_fn_vgg(gen_images,original_img).to(device)
+#             print(distances)
+#         closest_idx=torch.argmin(distances).item()
+#         print(closest_idx)
+#         closest_modes.append(closest_idx)
+#         print(closest_modes.shape)
+#         indices.append(closest_idx)
+#     print(indices)
+#     unique_modes=len(set(closest_modes))
+#     return unique_modes
+
+
 
 
     
