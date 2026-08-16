@@ -16,9 +16,10 @@ from torch.utils.data import DataLoader,Subset
 from torchvision import datasets,transforms
 from absl import flags
 from pathlib import Path
+from PIL import Image
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-# FLAGS=flags.FLAGS
+FLAGS=flags.FLAGS
 # flags.DEFINE_bool('return_image_tensor',True,help='Whether do you want to get the tensor of image or not')
 def setup(
     rank: int,
@@ -47,7 +48,7 @@ def setup(
     )
 
 
-def generate_samples(model, parallel, savedir, step,time_steps:int=1,number_of_images:int=64,net_="normal"):
+def generate_samples(model, parallel, savedir, step,time_steps:int=100,number_of_images:int=64,net_="normal",save_generated_images=False):
     """Save 64 generated images (8 x 8) for sanity check along training.
 
     Parameters
@@ -71,15 +72,18 @@ def generate_samples(model, parallel, savedir, step,time_steps:int=1,number_of_i
     node_ = NeuralODE(model_, solver="euler", sensitivity="adjoint")
     with torch.no_grad():
         traj = node_.trajectory(
-            torch.randn(number_of_images, 3, 32, 32, device=device),
+            torch.randn(number_of_images, FLAGS.num_color_channels, 32, 32, device=device),
             t_span=torch.linspace(0, 1, time_steps+1, device=device),
         )
-        traj = traj[-1, :].view([-1, 3, 32, 32]).clip(-1, 1)
-        traj = traj / 2 + 0.5
-    savedir = '/home/saurabhg/scratch/flow_outputs/icfm/image_tensor'
-    os.makedirs(savedir, exist_ok=True)
-    filepath = os.path.join(savedir, f"generated_ICFM_images_step_{step}_2.pt")
-    torch.save(traj, filepath)
+        traj = traj[-1, :].view([-1, FLAGS.num_color_channels, 32, 32])
+        if FLAGS.num_color_channels==3:
+            traj=traj.clip(-1,1)
+            traj = traj / 2 + 0.5
+            if save_generated_images:
+                    
+                os.makedirs(savedir, exist_ok=True)
+                filepath = os.path.join(savedir, f"generated_ICFM_images_step_{step}.png")
+                torchvision.utils.save_image(traj, filepath)
     model.train()
     return traj
 
@@ -95,8 +99,10 @@ def ema(source, target, decay):
 
 def infiniteloop(dataloader):
     while True:
-        for x, y in iter(dataloader):
+        for batch in iter(dataloader):
+            x= batch[0] if isinstance(batch,(list,tuple)) else batch
             yield x
+
 
             
 def logging_loss(loss_val, model_name, loss_file='/scratch/saurabhg/losses/'):
@@ -132,7 +138,7 @@ def plot_loss(
 
 def get_original_image(count:int=100):
      dataset=torchvision.datasets.CIFAR10(
-          root='/scratch/saurabhg/cifar10_data',
+          root='/scratch/saurabhg/CIFAR10/cifar10_data',
           download=False,
           transform=torchvision.transforms.Compose(
                [
@@ -203,8 +209,20 @@ def detect_mode_collapse(distance_matrix):
 #     print(indices)
 #     unique_modes=len(set(closest_modes))
 #     return unique_modes
-
-
-
-
+class FlatImageDataset:
+    def __init__(self,folder_path:str,image_size:int=256):
+        self.folder_path=folder_path
+        self.image_files=[f for f in os.listdir(folder_path) if f.lower().endswith('.png')]
+        self.image_size=image_size
+        self.transform=transforms.Compose([
+            transforms.Resize((self.image_size,self.image_size)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
+        ])        
+    def __len__(self):
+        return len(self.image_files)
+    def __getitem__(self,idx):
+        img_path = os.path.join(self.folder_path, self.image_files[idx])
+        image = Image.open(img_path).convert('RGB')
+        return self.transform(image)
     

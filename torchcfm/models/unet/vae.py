@@ -1,7 +1,5 @@
-"""
-this file corntains the model class for variational Auto encoder"""
 import torch
-import torch.nn as nn
+from torch import nn as nn
 
 class VAE_Encoder(nn.Module):
     def __init__(self, input_channels, hidden_channels, output_channels):
@@ -25,6 +23,7 @@ class VAE_Encoder(nn.Module):
         return x
 
 class ResidualBlock(nn.Module):
+    
     def __init__(self, channels):
         super().__init__()
         self.block = nn.Sequential(
@@ -35,9 +34,9 @@ class ResidualBlock(nn.Module):
             nn.GroupNorm(8, channels),
         )
         self.silu = nn.SiLU()
-
+    
     def forward(self, x):
-        return self.silu(x + self.block(x)) # Identity skip connection
+        return self.silu(x + self.block(x)) 
 
 class VAE_Latent(nn.Module):
   def __init__(self):
@@ -56,7 +55,8 @@ class VAE_Decoder(nn.Module):
   def __init__(self, in_channels, hidden_channels):
     super().__init__()
     # Starting from 16x16 latent
-    self.decoder_layer = nn.Sequential(
+    self.decoder_layer = nn.ModuleList([
+        
         # Level 1: 16x16 -> 32x32
         nn.Conv2d(in_channels, hidden_channels, kernel_size=3, stride=1, padding=1),
         ResidualBlock(hidden_channels), # Added to preserve latent detail
@@ -71,18 +71,23 @@ class VAE_Decoder(nn.Module):
         # Level 3: 64x64 -> 128x128
         ResidualBlock(hidden_channels // 2),
         nn.ConvTranspose2d(hidden_channels // 2, 3, kernel_size=4, stride=2, padding=1),
-        nn.Tanh() # Projects back to [-1, 1] range for images
+        nn.Tanh()  # Projects back to [-1, 1] range for images
+    ]
+                                    
     )
 
   def forward(self, x):
-    return self.decoder_layer(x)
+      for layer in self.decoder_layer:
+          x=layer(x)
+        
+      return x
 
 class VAE(nn.Module):
-  def __init__(self):
+  def __init__(self,input_channels,hidden_channels,latent_channels):
     super().__init__()
-    self.encoder=VAE_Encoder(3,64,8)
+    self.encoder=VAE_Encoder(input_channels,hidden_channels,latent_channels)
     self.latent_sampler=VAE_Latent()
-    self.decoder=VAE_Decoder(4,256)
+    self.decoder=VAE_Decoder(int(latent_channels/2),hidden_channels)
   def forward(self,x):
     # print(f'input {x.shape}')
     x=self.encoder(x)
