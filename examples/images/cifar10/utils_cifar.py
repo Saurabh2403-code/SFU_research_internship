@@ -225,4 +225,32 @@ class FlatImageDataset:
         img_path = os.path.join(self.folder_path, self.image_files[idx])
         image = Image.open(img_path).convert('RGB')
         return self.transform(image)
+
+def stitch_tensor(generated_image_folder:str):
+    stitched_tensor=[]
+    for i in range(260):
+        tensor=torch.load(f'{generated_image_folder}/part{i}.pt',map_location=torch.device('cpu'))
+        stitched_tensor.append(tensor)
+        del tensor
+    stitched_tensor=torch.cat(stitched_tensor,dim=0)
+    return stitched_tensor
+class Stitch_tensor:
+    def __init__(self,folder_path):
+        self.folder_path=folder_path
+        self.tensor_files=[f for f in os.listdir(folder_path) if f.lower().endswith('.pt')]
+    def __len__(self):
+        return len(self.tensor_files)
+    def stitch(self,save=True):
+        stitched_tensor=[]
+        for f in self.tensor_files:
+            tensor=torch.load(os.path.join(self.folder_path,f),map_location=torch.device('cpu'),weights_only=True)
+            stitched_tensor.append(tensor)
+            del tensor
+        stitched_tensor=torch.cat(stitched_tensor,dim=0)
+        if save:
+            torch.save(stitched_tensor,f'{self.folder_path}/consolidated_{stitched_tensor.shape[0]}.pt')
+        return stitched_tensor
+
+
+
     

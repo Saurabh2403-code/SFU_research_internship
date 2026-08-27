@@ -1,0 +1,53 @@
+Analysis of generated images 
+The following modules were not unloaded:
+  (Use "module --force purge" to unload all):
+
+  1) CCconfig        6)  ucx/1.14.1         11) flexiblas/3.3.1
+  2) gentoo/2023     7)  libfabric/1.18.0   12) imkl/2023.2.0
+  3) gcccore/.12.3   8)  pmix/4.2.4         13) StdEnv/2023
+  4) gcc/12.3        9)  ucc/1.2.0
+  5) hwloc/2.9.1     10) openmpi/4.1.5
+/home/saurabhg/nibi_env/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/home/saurabhg/nibi_env/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=VGG16_Weights.IMAGENET1K_V1`. You can also use `weights=VGG16_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Setting up LPIPS VGG...
+Setting up [LPIPS] perceptual loss: trunk [vgg], v[0.1], spatial [off]
+Loading model from: /home/saurabhg/nibi_env/lib/python3.10/site-packages/lpips/weights/v0.1/vgg.pth
+Calculating distances in batches of 1300
+  0%|          | 0/1300 [00:00<?, ?it/s]  0%|          | 0/1300 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/saurabhg/SFU_research_internship/examples/images/cifar10/metric_distance.py", line 202, in <module>
+    app.run(evaluate)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/absl/app.py", line 410, in run
+    _run_main(main, args)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/absl/app.py", line 355, in _run_main
+    sys.exit(main(argv))
+  File "/home/saurabhg/SFU_research_internship/examples/images/cifar10/metric_distance.py", line 194, in evaluate
+    calculate_lpips_modes(generated_images,original_images)
+  File "/home/saurabhg/SFU_research_internship/examples/images/cifar10/metric_distance.py", line 30, in calculate_lpips_modes
+    distances = loss_fn_vgg(gen_chunk, orig_expanded).squeeze()
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/lpips/lpips.py", line 119, in forward
+    outs0, outs1 = self.net.forward(in0_input), self.net.forward(in1_input)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/lpips/pretrained_networks.py", line 121, in forward
+    h = self.slice1(X)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/container.py", line 250, in forward
+    input = module(input)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/conv.py", line 554, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "/home/saurabhg/nibi_env/lib/python3.10/site-packages/torch/nn/modules/conv.py", line 549, in _conv_forward
+    return F.conv2d(
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 20.31 GiB. GPU 0 has a total capacity of 79.18 GiB of which 13.75 GiB is free. Including non-PyTorch memory, this process has 65.42 GiB memory in use. Of the allocated memory 62.90 GiB is allocated by PyTorch, and 1.91 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+Training Complete
