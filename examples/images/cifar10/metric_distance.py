@@ -6,10 +6,11 @@ from torchvision.transforms import InterpolationMode
 import os
 from absl import flags,app
 FLAGS=flags.FLAGS
+flags.DEFINE_string('savedir','/home/saurabhg/scratch/FLOW_BASED_MODELS/LATENT_DATASET/flow_outputs_2/icfm/distances',help='folder where metrics will be saved')
 flags.DEFINE_bool('calculate_lpips_modes',True,help='Do you want to run calculate lpips modes function')
 flags.DEFINE_integer('iteration',1,help='iteration which need to be evaluated')
-flags.DEFINE_string('original_images','/home/saurabhg/scratch/CORGIS_DATASET/original_image_tensor.pt',help='path to original image')
-flags.DEFINE_string('generated_images','/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/image_tensor/consolidated_4000.pt',help='filename of the generated_images_tensor')
+flags.DEFINE_string('original_images','/home/saurabhg/scratch/FLOW_BASED_MODELS/LATENT_DATASET/flow_outputs_2/icfm/image_tensor/original_image_tensor.pt',help='path to original image')
+flags.DEFINE_string('generated_images','/home/saurabhg/scratch/FLOW_BASED_MODELS/LATENT_DATASET/flow_outputs_2/icfm/image_tensor/generated_images_1000_iteration1_python_inference_scipt.pt',help='filename of the generated_images_tensor')
 def calculate_lpips_modes(generated_images, original_images):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print("Setting up LPIPS VGG...")
@@ -41,8 +42,8 @@ def calculate_lpips_modes(generated_images, original_images):
             torch.cuda.empty_cache()
             
     indices = torch.tensor(indices)
-    os.makedirs(f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/', exist_ok=True)
-    torch.save(indices, f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/lpips_minimum_indices.pt')
+    torch.save(indices,FLAGS.savedir+f'/iteration{FLAGS.iteration}/lpips_minimum_indices.pt')
+    sorted_distances_indices = torch.sort(indices[:, 1])[1]
     sorted_distances_indices = torch.sort(indices[:, 1])[1]
     closest_generated_images = generated_images[indices[:, 0].long()].to(device)
     compare_image = torch.stack((original_images,closest_generated_images), dim=-1)
@@ -50,7 +51,7 @@ def calculate_lpips_modes(generated_images, original_images):
     
     torchvision.utils.save_image(
         compare_image, 
-        f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/compare_images_sorted_distance.png', 
+        FLAGS.savedir+f'/iteration{FLAGS.iteration}/compare_images_sorted_distance.png', 
         nrow=2
     )
     print('Done')
@@ -60,8 +61,7 @@ def calculate_lpips_modes_way2(generated_images,original_images,return_indices=F
     device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     loss_fn_vgg=lpips.LPIPS(net='vgg').to(device)
     loss_fn_vgg.eval()
-    
-    # IMPORTANT: Keep datasets on CPU initially to prevent the 77GB VRAM spike
+
     print(f'Original Images:{original_images.shape}')
     print(f'Generated_images: {generated_images.shape}')
     
@@ -100,11 +100,11 @@ def calculate_lpips_modes_way2(generated_images,original_images,return_indices=F
     # Process final tensors on CPU
     indices=torch.tensor(indices)
     print(f'Indices:{indices.shape}')
-    torch.save(indices,f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/lpips_way_2_minimum_indices.pt')
+    torch.save(indices,FLAGS.savedir+f'/iteration{FLAGS.iteration}/lpips_way_2_minimum_indices.pt')
 
     sorted_distance=torch.sort(indices[:,1]) 
     sorted_distances_indices=sorted_distance[1] 
-    top_100=sorted_distances_indices[:100]
+    top_100=sorted_distances_indices#[:100]
     print(f'Sorted_distances_indices:{sorted_distances_indices.shape}')
 
     closest_original_images = original_images[indices[:,0].long()]
@@ -113,14 +113,14 @@ def calculate_lpips_modes_way2(generated_images,original_images,return_indices=F
     print(f'Compare Image:{compare_image.shape}')
     compare_image = compare_image[top_100].permute([0,4,1,2,3]).reshape(-1,3,256,256)
     
-    torchvision.utils.save_image(compare_image,f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/compare_images_sorted_distance_python_way2.png',nrow=2)
+    torchvision.utils.save_image(compare_image,FLAGS.savedir+f'/iteration{FLAGS.iteration}/compare_images_sorted_distance_python_way2.png',nrow=2)
     
     if return_indices:
         return indices
     print('Done')
 
 def count_frequency(generated_images,original_images,return_frequency=True):
-    indices=torch.load(f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/lpips_way_2_minimum_indices.pt')
+    indices=torch.load(FLAGS.savedir+f'/iteration{FLAGS.iteration}/lpips_way_2_minimum_indices.pt')
 
     indices=indices.to(torch.device('cpu'))
     out=torch.unique(indices[:,0],return_counts=True)
@@ -132,9 +132,9 @@ def count_frequency(generated_images,original_images,return_frequency=True):
     frequency_sorted_indexes=torch.argsort(dummy_tensor[:,1])
     out=dummy_tensor[frequency_sorted_indexes]
     generated_images_sorted_by_frequency=original_images[out[:,0].long()]
-    torchvision.utils.save_image(generated_images_sorted_by_frequency,f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/10000_generated_images_sorted_through_frequency_script.png')
+    torchvision.utils.save_image(generated_images_sorted_by_frequency,FLAGS.savedir+f'/iteration{FLAGS.iteration}/{len(original_images)}_generated_images_sorted_through_frequency_script.png')
 
-    torch.save(dummy_tensor,f'/home/saurabhg/scratch/CORGIS_DATASET/flow_outputs/icfm/distances/iteration{FLAGS.iteration}/frequency_distribution.pt')
+    torch.save(dummy_tensor,FLAGS.savedir+f'/iteration{FLAGS.iteration}/frequency_distribution.pt')
 
     if return_frequency:
         return dummy_tensor
@@ -149,11 +149,19 @@ def frequency_mask(minimum_indices_way1,threshold):
     return mask
 
 def evaluate(argv):
-    original_images=torch.load(FLAGS.original_images)
-    generated_images=torch.load(FLAGS.generated_images)
+    device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    if device==torch.device('cuda'):
+        original_images=torch.load(FLAGS.original_images)
+        print(FLAGS.generated_images)
+        generated_images=torch.load(FLAGS.generated_images)
+    original_images=torch.load(FLAGS.original_images,map_location=torch.device('cpu'))
+    print(FLAGS.generated_images)
+    generated_images=torch.load(FLAGS.generated_images,map_location=torch.device('cpu'))
+
     if FLAGS.calculate_lpips_modes:
+
         calculate_lpips_modes(generated_images,original_images)
-    calculate_lpips_modes_way2(generated_images,original_images)
+    # calculate_lpips_modes_way2(generated_images,original_images)
     count_frequency(generated_images,original_images)
 
 

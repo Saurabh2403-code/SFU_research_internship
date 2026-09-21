@@ -210,15 +210,19 @@ def detect_mode_collapse(distance_matrix):
 #     unique_modes=len(set(closest_modes))
 #     return unique_modes
 class FlatImageDataset:
-    def __init__(self,folder_path:str,image_size:int=256):
+    def __init__(self,folder_path:str,image_size:int=256,normalize:bool=True):
         self.folder_path=folder_path
         self.image_files=[f for f in os.listdir(folder_path) if f.lower().endswith('.png')]
         self.image_size=image_size
-        self.transform=transforms.Compose([
+        self.normalize=int(normalize)
+        transforms_list=[
             transforms.Resize((self.image_size,self.image_size)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))
-        ])        
+            transforms.ToTensor()
+        ]
+        if normalize:
+            transforms_list.append(transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5)))
+        self.transform=transforms.Compose(transforms_list)
+
     def __len__(self):
         return len(self.image_files)
     def __getitem__(self,idx):
